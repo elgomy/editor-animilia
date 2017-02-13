@@ -1,0 +1,152 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymerfire/firebase-app.html">
+<link rel="import" href="../polymerfire/firebase-auth.html">
+<link rel="import" href="../polymerfire/firebase-document.html">
+<link rel="import" href="../polymerfire/firebase-query.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="/toast-behavior.html">
+<link rel="import" href="/input-behavior.html">
+
+<!-- componente <complaint-animilia> -->
+<link rel="import" href="/complaint-animilia.html">
+
+<!-- imports que corresponden al componente <complaint-animilia> -->
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+
+<!--
+`editor-animilia`
+editor con el que vamos poder guardar las denuncias, editarlas, etc
+
+@demo demo/index.html 
+-->
+
+<dom-module id="editor-animilia">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    
+     <firebase-app 
+            auth-domain="form-polymerfire.firebaseapp.com"
+            database-url="https://form-polymerfire.firebaseio.com"
+            api-key="AIzaSyCqn8S15HxxOj3-racdBVhRozgeFUYdFww"
+            name="form-polymerfire">
+    </firebase-app>
+
+<!-- sistema de login -->
+    <firebase-auth 
+            app-name="form-polymerfire"
+            id="auth" 
+            user="{{user}}" 
+            provider="google" 
+            on-error="handleError"
+            signed-in="{{logueado}}">
+    </firebase-auth>
+
+    <paper-button raised on-tap="login" hidden$="{{logueado}}">login</paper-button>
+    <paper-button raised on-tap="logout" hidden$="{{!logueado}}">logout</paper-button>
+
+    <complaint-animilia
+          lugar="{{complaint.lugar}}"
+          identificador="{{complaint.identificador}}"     
+          descripcion="{{complaint.descripcion}}"       
+          inputs="{{inputs}}"
+    ></complaint-animilia>
+
+     <paper-button id="saveButton" raised>guardar</paper-button>
+     
+         <firebase-query
+            id="query"
+            app-name="form-polymerfire"
+            path="/denuncias/[[user.uid]]">
+        </firebase-query>
+
+<paper-toast id="positiveToast"></paper-toast>
+
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'editor-animilia',
+
+      properties: {
+         user:Object,
+         logueado: Boolean,
+         // objeto Complaint donde guardaremos todos los datos de la denuncia, que vienen bindeados desde el componente <complaint-animilia>
+         complaint:{
+          type:Object,
+          value:function(){
+            return{
+              lugar:'',
+              identificador:'',
+              fecha:new Date().toLocaleString(),
+              descripcion:''
+            }
+          }
+          
+         }
+       
+      },
+
+      behaviors: [Polymer.inputBehavior, Polymer.toastBehavior],
+
+      listeners:{
+         'saveButton.tap': 'save',
+         'positive-toast': 'positiveFeedback'
+         
+     },
+//////////////////  SISTEMA DE LOGIN //////////////////
+     login:function(){
+        this.$.auth.signInWithPopup().then(function(response){
+          this.saveProfile(response.user)
+        }.bind(this))
+
+      },
+
+      saveProfile:function(user){
+          console.log(user);
+          this.fbapp.database().ref('/usuarios/' + user.uid).set({
+                  nombre: user.displayName,
+                  email: user.email
+
+          })
+      },
+
+      logout:function(){
+        this.$.auth.signOut().
+        then(function(){
+          console.log('usuario deslogado')
+        })
+      },
+
+   /////////////////////////////////////////////////////////////////////////////////   
+
+      // método para guardar los datos de la denuncia en Firebase
+      save:function(){
+     
+        if(this.complaint.identificador && this.complaint.lugar && this.complaint.descripcion){
+          // sube los datos de la denuncia a Firebase
+          this.$.query.ref.push(this.complaint);
+          this.fire('positive-toast', 'denúncia guardada')
+          // después de introducir los valores en los input se limpia el texto
+          this.complaint= null;
+          
+        }else{
+          // al clickar en el botón 'guardar' se lanza el mètodo validator, incluido en el behavior, que valida los inputs
+          for(var i = 0; i < this.inputs.length; i++ ){
+              this.validator(this.inputs[i])
+           };
+
+        };          
+                 
+
+      },
+
+    });
+  </script>
+</dom-module>

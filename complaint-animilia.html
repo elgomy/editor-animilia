@@ -1,0 +1,100 @@
+<!--<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html"> -->
+<link rel="import" href="/input-behavior.html">
+
+<!--
+`form-animilia`
+formulario de entrada de denuncias de maltrato animal
+
+@demo demo/index.html 
+-->
+
+<dom-module id="complaint-animilia">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    
+   
+
+  
+<!-- sistema de entrada de datos para generar la denuncia -->
+
+    <paper-input 
+          id="idInput" 
+          label="identificador"
+          required
+          on-keydown="validateNull"
+          error-message="necessário incluir um identificador"
+          value="{{identificador}}">          
+    </paper-input>
+
+    <paper-input  
+          id="placeInput" 
+          label="lugar"
+          required
+          on-keydown="validateNull"
+          error-message="necessário incluir um lugar"
+          value="{{lugar}}">
+    </paper-input>
+
+    <paper-textarea 
+          id="textInput" 
+          label="Relato do que você presenciou"
+          rows="2"
+          required   
+          on-keydown="validateNull"
+          error-message="necessário relatar a denúncia"
+          value="{{descripcion}}">                
+    </paper-textarea>
+
+
+
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'complaint-animilia',
+
+      properties: {
+        
+
+          // lugar de la denuncia. Substituiremos esta propiedad por un componente de Google maps
+          lugar:{
+            type:String,
+            notify: true,
+            value: ''
+          },
+          // identificador de la denuncia que servirá para el usuario identificar sus denuncias. Probablemente excluiremos esta propiedad
+          identificador:{
+            type:String,
+            notify: true,
+            value: ''
+          },
+          // relato de la denuncia
+          descripcion:{
+             type:String,
+            notify: true,
+            value: ''
+          },
+          // inputs del formulario
+          inputs:{
+            type:Array,
+            value: function(){
+              return [this.$.idInput,this.$.placeInput,this.$.textInput]
+            },
+            notify: true,
+          }       
+
+      },
+       behaviors: [Polymer.inputBehavior]  
+
+   
+    });
+  </script>
+</dom-module>
